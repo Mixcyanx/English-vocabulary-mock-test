@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>軟創週五英文單字測驗 - Standalone</title>
+    <!-- Favicon and Apple Touch Icon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Mixcyanx/English-vocabulary-mock-test/refs/heads/main/Icon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Mixcyanx/English-vocabulary-mock-test/refs/heads/main/Apple_Icon.png">
+    <!-- Tailwind CSS Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+            --font-display: "Outfit", sans-serif;
+            --font-mono: "JetBrains Mono", monospace;
+        }
+        body {
+            font-family: var(--font-sans);
+        }
+        .font-display { font-family: var(--font-display); }
+        .font-mono { font-family: var(--font-mono); }
+        
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-neutral-50 dark:bg-neutral-950 transition-colors duration-300">
+    <div id="root"></div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useCallback, useEffect, useRef } = React;
+        
+        // Safety wrapper for Framer Motion
+        const motion = window.Motion?.motion || window.FramerMotion?.motion || new Proxy({}, { 
+            get: () => (props) => <div {...props}>{props.children}</div> 
+        });
+        const AnimatePresence = window.Motion?.AnimatePresence || window.FramerMotion?.AnimatePresence || (({ children }) => children);
+
+        // Safety wrapper for Lucide Icons
+        const getIcon = (name) => {
+            const global = window.LucideReact || window.lucideReact || window.lucide || window.Lucide;
+            const IconComponent = global?.[name];
+            if (!IconComponent) {
+                // Return a simple SVG fallback component for common icons to avoid question marks
+                return (props) => {
+                    const iconPaths = {
+                        Volume2: <g><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></g>,
+                        ChevronRight: <path d="m9 18 6-6-6-6"/>,
+                        RotateCcw: <g><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></g>,
+                        Play: <polygon points="5 3 19 12 5 21 5 3"/>,
+                        CheckCircle2: <g><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></g>,
+                        List: <g><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></g>,
+                        Sun: <g><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></g>,
+                        Moon: <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>,
+                        Settings: <g><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></g>,
+                        X: <g><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></g>,
+                        Search: <g><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></g>,
+                        Check: <polyline points="20 6 9 17 4 12"/>,
+                        Clock: <g><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></g>,
+                        BookOpen: <g><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></g>,
+                        ChevronLeft: <path d="m15 18-6-6 6-6"/>,
+                        RefreshCw: <g><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></g>,
+                    };
+                    return (
+                        <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            width="24" 
+                            height="24" 
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            strokeWidth="2" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            {...props}
+                            className={`lucide lucide-${name.toLowerCase()} ${props.className || ''}`}
+                        >
+                            {iconPaths[name] || <g><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></g>}
+                        </svg>
+                    );
+                };
+            }
+            return IconComponent;
+        };
+
+        const Volume2 = getIcon('Volume2');
+        const ChevronRight = getIcon('ChevronRight');
+        const RotateCcw = getIcon('RotateCcw');
+        const Play = getIcon('Play');
+        const CheckCircle2 = getIcon('CheckCircle2');
+        const List = getIcon('List');
+        const Sun = getIcon('Sun');
+        const Moon = getIcon('Moon');
+        const Settings = getIcon('Settings');
+        const X = getIcon('X');
+        const Search = getIcon('Search');
+        const Check = getIcon('Check');
+        const Clock = getIcon('Clock');
+        const BookOpen = getIcon('BookOpen');
+        const ChevronLeft = getIcon('ChevronLeft');
+        const RefreshCw = getIcon('RefreshCw');
+
+        const VOCABULARY_LIST = [
+            "emperor", "rule", "construction", "the great wall", "network", 
+            "writing system", "currency", "measurement", "army", "life-sized terracotta", 
+            "protect", "Xi'an's terracotta museum", "last", "clay", "unearthed", 
+            "coating", "fall off", "technique", "reveal", "archeologist", 
+            "feature", "liquid", "preserve", "artifact", "spray", "warrior", 
+            "back to", "chemist", "apply", "the pyramids of Giza", "icon", 
+            "cemetery", "confirm", "space alien", "ordinary", "Egyptian", 
+            "involve", "completion", "role", "block", "compete", "skeleton", 
+            "according to", "arthritis", "task", "laborer", "proud", "Khufu's Great Pyramid"
+        ];
+
+        const GITHUB_TXT_URL = "https://raw.githubusercontent.com/Mixcyanx/English-vocabulary-mock-test/main/2026_5_15.txt";
+
+        function App() {
+            const [state, setState] = useState('HOME');
+            const [vocabulary, setVocabulary] = useState(VOCABULARY_LIST);
+            const [quizMode, setQuizMode] = useState('PAPER');
+            const [selectedWords, setSelectedWords] = useState([]);
+            const [userAnswers, setUserAnswers] = useState([]);
+            const [currentInput, setCurrentInput] = useState('');
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const [isDarkMode, setIsDarkMode] = useState(false);
+            const [showSettings, setShowSettings] = useState(false);
+            const [isFetching, setIsFetching] = useState(false);
+            const [wrongCounts, setWrongCounts] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('vocab_wrong_counts');
+                    return saved ? JSON.parse(saved) : {};
+                } catch {
+                    return {};
+                }
+            });
+
+            const [settings, setSettings] = useState({
+                excludedWords: [],
+                autoAdvanceSeconds: 0,
+            });
+            const [timer, setTimer] = useState(null);
+            const timerRef = useRef(null);
+            const inputRef = useRef(null);
+
+            useEffect(() => {
+                localStorage.setItem('vocab_wrong_counts', JSON.stringify(wrongCounts));
+            }, [wrongCounts]);
+
+            useEffect(() => {
+                if (isDarkMode) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }, [isDarkMode]);
+
+            const fetchVocabulary = useCallback(async () => {
+                setIsFetching(true);
+                try {
+                    const response = await fetch(GITHUB_TXT_URL);
+                    const text = await response.text();
+                    const words = text
+                        .split('\n')
+                        .map(line => line.replace(/^\d+\.\s*/, '').trim())
+                        .filter(word => word.length > 0);
+                    
+                    if (words.length > 0) {
+                        setVocabulary(words);
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch vocabulary:', error);
+                } finally {
+                    setIsFetching(false);
+                }
+            }, []);
+
+            useEffect(() => {
+                fetchVocabulary();
+            }, [fetchVocabulary]);
+
+            const speak = useCallback((text) => {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'en-US';
+                    utterance.rate = 0.8;
+                    window.speechSynthesis.speak(utterance);
+                }
+            }, []);
+
+            const startQuiz = useCallback((mode) => {
+                const availableWords = vocabulary.filter(w => !settings.excludedWords.includes(w));
+                if (availableWords.length < 10) {
+                    alert('剩餘單字不足 10 個，請到設定調整排除名單。');
+                    return;
+                }
+
+                const pool = [...availableWords];
+                const chosen = [];
+                
+                for (let i = 0; i < 10; i++) {
+                    let totalWeight = 0;
+                    const weights = pool.map(word => {
+                        const weight = 1 + (wrongCounts[word] || 0);
+                        totalWeight += weight;
+                        return weight;
+                    });
+
+                    let random = Math.random() * totalWeight;
+                    for (let j = 0; j < pool.length; j++) {
+                        random -= weights[j];
+                        if (random <= 0) {
+                            chosen.push(pool[j]);
+                            pool.splice(j, 1);
+                            break;
+                        }
+                    }
+                }
+
+                setSelectedWords(chosen);
+                setUserAnswers(new Array(10).fill(''));
+                setCurrentIndex(0);
+                setQuizMode(mode);
+                setCurrentInput('');
+                setState('QUIZ');
+            }, [vocabulary, settings.excludedWords, wrongCounts]);
+
+            const handleNext = useCallback(() => {
+                let finalAnswers = userAnswers;
+                if (quizMode === 'INPUT') {
+                    const updatedAnswers = [...userAnswers];
+                    updatedAnswers[currentIndex] = currentInput.trim();
+                    finalAnswers = updatedAnswers;
+                    setUserAnswers(updatedAnswers);
+                }
+
+                if (currentIndex < 9) {
+                    setCurrentIndex(prev => prev + 1);
+                    setCurrentInput('');
+                    setTimeout(() => inputRef.current?.focus(), 50);
+                } else {
+                    if (quizMode === 'INPUT') {
+                        setWrongCounts(prev => {
+                            const next = { ...prev };
+                            selectedWords.forEach((word, idx) => {
+                                if (finalAnswers[idx].toLowerCase() !== word.toLowerCase()) {
+                                    next[word] = (next[word] || 0) + 1;
+                                }
+                            });
+                            return next;
+                        });
+                    }
+                    setState('RESULTS');
+                }
+            }, [currentIndex, quizMode, currentInput, userAnswers, selectedWords]);
+
+            useEffect(() => {
+                if (state === 'QUIZ' && settings.autoAdvanceSeconds > 0) {
+                    setTimer(settings.autoAdvanceSeconds);
+                    timerRef.current = setInterval(() => {
+                        setTimer(prev => {
+                            if (prev !== null && prev <= 1) {
+                                handleNext();
+                                return settings.autoAdvanceSeconds;
+                            }
+                            return prev !== null ? prev - 1 : null;
+                        });
+                    }, 1000);
+                } else {
+                    setTimer(null);
+                    if (timerRef.current) clearInterval(timerRef.current);
+                }
+                return () => {
+                    if (timerRef.current) clearInterval(timerRef.current);
+                };
+            }, [state, currentIndex, settings.autoAdvanceSeconds, handleNext]);
+
+            useEffect(() => {
+                if (state === 'QUIZ' && selectedWords.length > 0) {
+                    speak(selectedWords[currentIndex]);
+                }
+            }, [state, currentIndex, selectedWords, speak]);
+
+            const reset = () => {
+                setState('HOME');
+                setSelectedWords([]);
+                setUserAnswers([]);
+                setCurrentIndex(0);
+                setCurrentInput('');
+            };
+
+            const calculateScore = () => {
+                return userAnswers.reduce((score, ans, idx) => {
+                    return ans.toLowerCase() === selectedWords[idx].toLowerCase() ? score + 1 : score;
+                }, 0);
+            };
+
+            const toggleExcluded = (word) => {
+                setSettings(prev => ({
+                    ...prev,
+                    excludedWords: prev.excludedWords.includes(word)
+                        ? prev.excludedWords.filter(w => w !== word)
+                        : [...prev.excludedWords, word]
+                }));
+            };
+
+            return (
+                <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'dark' : ''}`}>
+                    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 font-sans p-4 md:p-8 flex flex-col items-center justify-center relative">
+                    
+                        {/* Top Bar Controls */}
+                        <div className="fixed top-6 right-6 flex items-center gap-2 z-50">
+                            <button
+                                onClick={() => setIsDarkMode(!isDarkMode)}
+                                className="p-3 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm hover:scale-110 transition-all text-neutral-600 dark:text-neutral-400 active:scale-95"
+                            >
+                                {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                            </button>
+                            <button
+                                onClick={() => setShowSettings(true)}
+                                className="p-3 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm hover:scale-110 transition-all text-neutral-600 dark:text-neutral-400 active:scale-95"
+                            >
+                                <Settings className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <AnimatePresence mode="wait">
+                            {state === 'HOME' && (
+                                <motion.div
+                                    key="home"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                    className="w-full max-w-md text-center space-y-8"
+                                >
+                                    <div className="space-y-4">
+                                        <div className="flex justify-center mb-4">
+                                            <img 
+                                                src="https://raw.githubusercontent.com/Mixcyanx/English-vocabulary-mock-test/refs/heads/main/Icon.png" 
+                                                alt="Logo" 
+                                                className="w-16 h-16 md:w-24 md:h-24 drop-shadow-xl"
+                                                referrerPolicy="no-referrer"
+                                            />
+                                        </div>
+                                        <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-indigo-600 dark:text-indigo-400 font-display">
+                                            軟創週五英文課<br />單字模擬測驗
+                                        </h1>
+                                        <p className="text-neutral-500 dark:text-neutral-400 text-lg">
+                                            準備好筆與紙，系統會隨機抽選 10 個單字並唸出。
+                                        </p>
+                                    </div>
+                                    
+                                    <div className="space-y-4">
+                                        <button
+                                            onClick={() => startQuiz('PAPER')}
+                                            className="group relative w-full bg-indigo-600 text-white rounded-2xl py-5 px-8 font-semibold text-xl shadow-xl shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-all active:scale-[0.98] flex items-center justify-center gap-3 overflow-hidden"
+                                        >
+                                            <Play className="w-6 h-6 fill-current" />
+                                            開始測驗 (紙筆模式)
+                                        </button>
+
+                                        <button
+                                            onClick={() => startQuiz('INPUT')}
+                                            className="group relative w-full bg-emerald-600 text-white rounded-2xl py-5 px-8 font-semibold text-xl shadow-xl shadow-emerald-200 dark:shadow-none hover:bg-emerald-700 transition-all active:scale-[0.98] flex items-center justify-center gap-3 overflow-hidden"
+                                        >
+                                            <Search className="w-6 h-6" />
+                                            開始測驗 (文字輸入模式)
+                                        </button>
+
+                                        <button
+                                            onClick={() => setState('REVIEW')}
+                                            className="w-full bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-800 rounded-2xl py-4 px-8 font-semibold text-lg hover:border-indigo-500 dark:hover:border-indigo-500 transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+                                        >
+                                            <BookOpen className="w-6 h-6" />
+                                            複習題庫
+                                        </button>
+                                    </div>
+
+                                    <div className="text-sm text-neutral-400 mt-12 flex flex-col items-center gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <List className="w-4 h-4" />
+                                            <span>題庫總計 {vocabulary.length} 個單字</span>
+                                            <button 
+                                                onClick={fetchVocabulary}
+                                                disabled={isFetching}
+                                                className={`ml-2 p-1 hover:text-indigo-500 transition-colors ${isFetching ? 'animate-spin' : ''}`}
+                                            >
+                                                <RefreshCw className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {state === 'QUIZ' && (
+                                <motion.div
+                                    key="quiz"
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 1.05 }}
+                                    className="w-full max-w-md bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl p-8 space-y-10 border border-neutral-100 dark:border-neutral-800 relative overflow-hidden"
+                                >
+                                    {timer !== null && (
+                                        <motion.div 
+                                            className="absolute top-0 left-0 h-1.5 bg-indigo-500 z-10"
+                                            initial={{ width: "100%" }}
+                                            animate={{ width: "0%" }}
+                                            key={`timer-${currentIndex}-${timer}`}
+                                            transition={{ duration: 1, ease: "linear" }}
+                                        />
+                                    )}
+
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-bold tracking-widest text-neutral-400 uppercase">
+                                                Question {currentIndex + 1} / 10
+                                            </span>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-neutral-100 dark:bg-neutral-800 text-neutral-500 uppercase font-bold">
+                                                    {quizMode === 'INPUT' ? 'Input Mode' : 'Paper Mode'}
+                                                </span>
+                                                {timer !== null && (
+                                                    <div className="flex items-center gap-1 text-indigo-500 font-mono text-[10px]">
+                                                        <Clock className="w-3 h-3" />
+                                                        <span>{timer}s Auto</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            {[...Array(10)].map((_, i) => (
+                                                <div
+                                                    key={i}
+                                                    className={`h-1.5 w-4 rounded-full transition-colors ${
+                                                        i === currentIndex ? 'bg-indigo-600' : i < currentIndex ? 'bg-indigo-200 dark:bg-indigo-900/50' : 'bg-neutral-100 dark:bg-neutral-800'
+                                                    }`}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col items-center gap-8 py-4">
+                                        <button
+                                            onClick={() => speak(selectedWords[currentIndex])}
+                                            className="w-40 h-40 rounded-full bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center group hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors active:scale-95 border-4 border-indigo-100 dark:border-indigo-900/30"
+                                        >
+                                            <Volume2 className="w-20 h-20 text-indigo-600 dark:text-indigo-400 transition-transform group-hover:scale-110" />
+                                        </button>
+                                        
+                                        {quizMode === 'INPUT' && (
+                                            <div className="w-full space-y-2">
+                                                <label className="text-xs font-semibold text-neutral-400 ml-1 uppercase">Your Answer</label>
+                                                <input
+                                                    ref={inputRef}
+                                                    autoFocus
+                                                    type="text"
+                                                    value={currentInput}
+                                                    onChange={(e) => setCurrentInput(e.target.value)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleNext()}
+                                                    placeholder="Type what you hear..."
+                                                    className="w-full bg-neutral-50 dark:bg-neutral-950 border-2 border-neutral-100 dark:border-neutral-800 rounded-2xl py-4 px-6 text-xl font-medium focus:border-indigo-500 focus:outline-none transition-all placeholder:text-neutral-300 dark:placeholder:text-neutral-700"
+                                                />
+                                            </div>
+                                        )}
+                                        
+                                        <p className="text-neutral-400 dark:text-neutral-500 text-xs animate-pulse">
+                                            {quizMode === 'INPUT' ? '輸入完後按下 Enter 或「下一題」' : '點擊重複播放語音，並在紙上寫下單字'}
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        onClick={handleNext}
+                                        className="w-full bg-indigo-600 text-white dark:bg-indigo-500 rounded-xl py-4 px-6 font-semibold text-lg flex items-center justify-center gap-2 hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors shadow-lg"
+                                    >
+                                        {currentIndex < 9 ? '下一題' : '查看結果'}
+                                        <ChevronRight className="w-5 h-5" />
+                                    </button>
+                                </motion.div>
+                            )}
+
+                            {state === 'RESULTS' && (
+                                <motion.div
+                                    key="results"
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="w-full max-w-4xl space-y-8 pb-20"
+                                >
+                                    <div className="text-center space-y-2">
+                                        <h2 className="text-3xl font-bold flex items-center justify-center gap-3 font-display">
+                                            <CheckCircle2 className="text-green-500 w-8 h-8" />
+                                            測驗結束
+                                        </h2>
+                                        {quizMode === 'INPUT' ? (
+                                            <div className="space-y-1">
+                                                <p className="text-4xl font-bold font-display text-indigo-600 dark:text-indigo-400">
+                                                    {calculateScore()} <span className="text-xl text-neutral-400">/ 10</span>
+                                                </p>
+                                                <p className="text-neutral-500 dark:text-neutral-400">您的最終得分</p>
+                                            </div>
+                                        ) : (
+                                            <p className="text-neutral-500 dark:text-neutral-400">請核對這 10 個單字是否拼寫正確</p>
+                                        )}
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {selectedWords.map((word, idx) => {
+                                            const isCorrect = quizMode === 'INPUT' && userAnswers[idx].toLowerCase() === word.toLowerCase();
+                                            return (
+                                                <motion.div
+                                                    key={idx}
+                                                    initial={{ opacity: 0, x: -10 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ delay: idx * 0.05 }}
+                                                    className={`bg-white dark:bg-neutral-900 p-5 rounded-2xl border flex items-center justify-between gap-4 group transition-colors ${
+                                                        quizMode === 'INPUT' 
+                                                            ? (isCorrect ? 'border-green-200 dark:border-green-900/30' : 'border-red-200 dark:border-red-900/30')
+                                                            : 'border-neutral-100 dark:border-neutral-800 hover:border-indigo-300'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <span className="text-neutral-300 dark:text-neutral-700 font-mono text-sm">{String(idx + 1).padStart(2, '0')}.</span>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-lg font-medium text-neutral-800 dark:text-neutral-200">{word}</span>
+                                                            {quizMode === 'INPUT' && !isCorrect && (
+                                                                <span className="text-sm text-red-500 font-medium line-through decoration-2 opacity-60">
+                                                                    {userAnswers[idx] || '(未填寫)'}
+                                                                </span>
+                                                            )}
+                                                            {quizMode === 'INPUT' && isCorrect && (
+                                                                <span className="text-xs text-green-500 font-bold uppercase tracking-widest flex items-center gap-1">
+                                                                    <Check className="w-3 h-3" /> Correct
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => speak(word)}
+                                                            className="p-2.5 text-neutral-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-xl transition-colors"
+                                                        >
+                                                            <Volume2 className="w-5 h-5" />
+                                                        </button>
+                                                    </div>
+                                                </motion.div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                                        <button
+                                            onClick={() => startQuiz(quizMode)}
+                                            className="flex-1 bg-indigo-600 text-white rounded-xl py-4 px-6 font-semibold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg"
+                                        >
+                                            <RotateCcw className="w-5 h-5" />
+                                            重新測驗
+                                        </button>
+                                        <button
+                                            onClick={reset}
+                                            className="flex-1 bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 rounded-xl py-4 px-6 font-semibold hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
+                                        >
+                                            回到首頁
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {state === 'REVIEW' && (
+                                <motion.div
+                                    key="review"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    className="w-full max-w-4xl space-y-8"
+                                >
+                                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                                        <button
+                                            onClick={() => setState('HOME')}
+                                            className="flex items-center gap-2 text-neutral-500 hover:text-indigo-600 transition-colors font-semibold"
+                                        >
+                                            <ChevronLeft className="w-5 h-5" />
+                                            返回主選單
+                                        </button>
+                                        <h2 className="text-2xl font-bold font-display">題庫複習 ({vocabulary.length})</h2>
+                                        <div className="invisible" />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                                        {vocabulary.map((word, idx) => (
+                                            <div 
+                                                key={idx}
+                                                className="bg-white dark:bg-neutral-900 p-4 rounded-xl border border-neutral-100 dark:border-neutral-800 flex flex-col gap-2 group hover:border-indigo-200 dark:hover:border-indigo-900 transition-all"
+                                            >
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <span className="text-xs font-mono text-neutral-300 dark:text-neutral-700">{idx + 1}</span>
+                                                        {wrongCounts[word] > 0 && (
+                                                            <span className="text-[10px] text-red-500/70 font-bold bg-red-50 dark:bg-red-950/20 px-1 rounded flex items-center gap-0.5">
+                                                                <X className="w-2.5 h-2.5" /> {wrongCounts[word]}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <button
+                                                        onClick={() => speak(word)}
+                                                        className="p-1.5 rounded-lg text-neutral-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+                                                    >
+                                                        <Volume2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                                <span className="text-sm font-medium line-clamp-1">{word}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Settings Modal */}
+                        <AnimatePresence>
+                            {showSettings && (
+                                <>
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        onClick={() => setShowSettings(false)}
+                                        className="fixed inset-0 bg-neutral-900/40 backdrop-blur-sm z-[60]"
+                                    />
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                        className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl md:h-[80vh] bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl z-[70] flex flex-col border border-neutral-200 dark:border-neutral-800 overflow-hidden"
+                                    >
+                                        <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between shrink-0">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
+                                                    <Settings className="w-6 h-6" />
+                                                </div>
+                                                <h3 className="text-xl font-bold font-display">測驗設定</h3>
+                                            </div>
+                                            <button
+                                                onClick={() => setShowSettings(false)}
+                                                className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
+                                            >
+                                                <X className="w-6 h-6" />
+                                            </button>
+                                        </div>
+
+                                        <div className="flex-1 overflow-y-auto p-6 space-y-10">
+                                            <section className="space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2 text-neutral-800 dark:text-neutral-200 font-semibold">
+                                                        <Clock className="w-5 h-5 text-indigo-500" />
+                                                        <h4>自動進下一題</h4>
+                                                    </div>
+                                                    {Object.keys(wrongCounts).length > 0 && (
+                                                        <button
+                                                            onClick={() => {
+                                                                if (confirm('確定要清除所有錯誤紀錄與加權設定嗎？')) {
+                                                                    setWrongCounts({});
+                                                                }
+                                                            }}
+                                                            className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1 font-medium bg-red-50 dark:bg-red-950/20 px-2 py-1 rounded-md transition-colors"
+                                                        >
+                                                            <RotateCcw className="w-3 h-3" />
+                                                            重設錯誤統計
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="grid grid-cols-5 gap-2">
+                                                    {[0, 3, 5, 8, 10].map(s => (
+                                                        <button
+                                                            key={s}
+                                                            onClick={() => setSettings(prev => ({ ...prev, autoAdvanceSeconds: s }))}
+                                                            className={`py-3 rounded-xl border font-medium transition-all ${
+                                                                settings.autoAdvanceSeconds === s
+                                                                    ? 'bg-indigo-600 border-indigo-600 text-white'
+                                                                    : 'bg-white dark:bg-neutral-800 border-neutral-100 dark:border-neutral-700 hover:border-indigo-300'
+                                                            }`}
+                                                        >
+                                                            {s === 0 ? '手動' : `${s}s`}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </section>
+
+                                            <section className="space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2 text-neutral-800 dark:text-neutral-200 font-semibold">
+                                                        <List className="w-5 h-5 text-indigo-500" />
+                                                        <h4>排除特定單字</h4>
+                                                    </div>
+                                                    <span className="text-xs text-indigo-500 font-medium">已排除 {settings.excludedWords.length} 個</span>
+                                                </div>
+                                                
+                                                <div className="flex flex-wrap gap-2 max-h-[300px] overflow-y-auto p-1">
+                                                    {vocabulary.map(word => {
+                                                        const isExcluded = settings.excludedWords.includes(word);
+                                                        return (
+                                                            <button
+                                                                key={word}
+                                                                onClick={() => toggleExcluded(word)}
+                                                                className={`px-3 py-2 rounded-lg border text-sm transition-all flex items-center gap-2 ${
+                                                                    isExcluded
+                                                                        ? 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400'
+                                                                        : 'bg-white dark:bg-neutral-800 border-neutral-100 dark:border-neutral-700 hover:border-indigo-200 dark:hover:border-indigo-900'
+                                                                }`}
+                                                            >
+                                                                {word}
+                                                                {isExcluded && <X className="w-3.5 h-3.5" />}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </section>
+                                        </div>
+
+                                        <div className="p-6 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50 shrink-0">
+                                            <button
+                                                onClick={() => setShowSettings(false)}
+                                                className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition-colors"
+                                            >
+                                                完成設定
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                </>
+                            )}
+                        </AnimatePresence>
+
+                        <footer className="fixed bottom-6 text-neutral-300 dark:text-neutral-800 text-[10px] tracking-widest hidden md:block uppercase font-mono">
+                            Friday English Workshop • Standalone Version
+                        </footer>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
